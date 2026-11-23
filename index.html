@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"></head><body>
+<title>소설 공모 목록</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&family=Noto+Serif+KR:wght@700&display=swap">
+<style>
+/* 배치: 한 줄에 한 공모. 왼쪽에 마감일과 남은 날, 오른쪽에 제목과 성격. 달마다 원고지 눈금 띠로 나눈다. */
+:root{
+  --paper:#f7f9f8; --sheet:#ffffff; --ink:#1c2a27; --ink-soft:#56655f; --line:#d6dfdb;
+  --green:#1d6b58; --green-soft:#e3f0eb; --warn:#a4540b; --warn-soft:#fbeedd; --hot:#b3261e; --hot-soft:#fbe6e3;
+  --display:"Noto Serif KR","Nanum Myeongjo","Batang",serif;
+  --body:"Noto Sans KR","Malgun Gothic","Apple SD Gothic Neo",sans-serif;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --paper:#121816; --sheet:#1a221f; --ink:#e6eeea; --ink-soft:#9fb0a9; --line:#2f3b37;
+  --green:#6fc7ad; --green-soft:#1f3630; --warn:#e9a55a; --warn-soft:#3a2a17; --hot:#ff8f86; --hot-soft:#3d1f1c; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --paper:#121816; --sheet:#1a221f; --ink:#e6eeea; --ink-soft:#9fb0a9; --line:#2f3b37;
+  --green:#6fc7ad; --green-soft:#1f3630; --warn:#e9a55a; --warn-soft:#3a2a17; --hot:#ff8f86; --hot-soft:#3d1f1c; color-scheme:dark }
+body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;margin:0}
+.wrap{max-width:760px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:22px}
+header h1{font-family:var(--display);font-weight:700;font-size:1.9rem;letter-spacing:-.01em;margin:0;text-wrap:balance}
+header p{margin:6px 0 0;color:var(--ink-soft);font-size:.92rem}
+.grid{height:14px;border-top:2px solid var(--green);border-bottom:1px solid var(--green);
+  background-image:linear-gradient(90deg,var(--green) 1px,transparent 1px);background-size:14px 100%;opacity:.55}
+.filters{display:flex;flex-wrap:wrap;gap:8px}
+.filters button{font:inherit;font-size:.88rem;padding:6px 14px;border-radius:999px;border:1px solid var(--line);background:var(--sheet);color:var(--ink);cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--sheet);font-weight:600}
+.filters button:focus-visible,.row:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.month{display:flex;flex-direction:column;gap:0}
+.month h2{font-family:var(--display);font-size:1.15rem;font-weight:700;margin:0 0 8px;display:flex;align-items:baseline;gap:10px}
+.month h2 small{font-family:var(--body);font-weight:400;font-size:.82rem;color:var(--ink-soft)}
+.list{background:var(--sheet);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.row{display:grid;grid-template-columns:92px 1fr;gap:14px;padding:13px 16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.when{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.when b{font-variant-numeric:tabular-nums;font-size:1.02rem;font-weight:700;white-space:nowrap}
+.when span{font-size:.78rem;color:var(--ink-soft)}
+.dd{font-variant-numeric:tabular-nums;font-size:.78rem;font-weight:700;padding:1px 8px;border-radius:4px;background:var(--green-soft);color:var(--green)}
+.dd.soon{background:var(--warn-soft);color:var(--warn)}
+.dd.hot{background:var(--hot-soft);color:var(--hot)}
+.what{min-width:0;display:flex;flex-direction:column;gap:5px}
+.what h3{margin:0;font-size:1.02rem;font-weight:700;line-height:1.4;text-wrap:balance}
+.what p{margin:0;color:var(--ink-soft);font-size:.92rem}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:.76rem;padding:1px 8px;border-radius:4px;border:1px solid var(--line);color:var(--ink)}
+.tag.kind{background:var(--green-soft);border-color:transparent;color:var(--green);font-weight:600}
+.tag.new{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.empty{padding:18px 16px;color:var(--ink-soft);background:var(--sheet);border:1px dashed var(--line);border-radius:6px}
+.foot{display:flex;flex-direction:column;gap:14px;color:var(--ink-soft);font-size:.9rem}
+.foot h2{font-family:var(--display);font-size:1rem;color:var(--ink);margin:0 0 4px}
+.foot ul{margin:0;padding-left:1.1em}
+@media (max-width:440px){ .row{grid-template-columns:78px 1fr;gap:10px;padding:12px} header h1{font-size:1.6rem} }
+</style>
+<div class="wrap">
+<header>
+<h1>소설 공모 목록</h1>
+<p>직접 원고를 내셔야 하는 공모 <b id="count"></b> · 2026-11-23에 고침 · 마감이 지난 것은 자동으로 숨깁니다</p>
+</header>
+<div class="grid" aria-hidden="true"></div>
+<div class="filters" role="group" aria-label="갈래로 고르기"><button type="button" id="f0" data-f="전체" aria-pressed="true">전체</button><button type="button" id="f1" data-f="장편" aria-pressed="false">장편</button><button type="button" id="f2" data-f="단편" aria-pressed="false">단편</button><button type="button" id="f3" data-f="동화" aria-pressed="false">동화</button><button type="button" id="f4" data-f="웹소설" aria-pressed="false">웹소설</button><button type="button" id="f5" data-f="청소년" aria-pressed="false">청소년</button><button type="button" id="f6" data-f="기성 작가 가능" aria-pressed="false">기성 작가 가능</button></div>
+<div id="months" style="display:flex;flex-direction:column;gap:26px"></div>
+<div class="foot">
+
+<div><h2>넣지 않은 것 (상금이 없거나 확인되지 않음)</h2><ul><li>스토리코스모스 신인소설상(인세만), 소설미학 신인소설상, 한국소설창작 신춘문예 소설상, 한국소설가협회 한국소설신인상</li></ul></div>
+<p>"신인 대상"은 등단 작가를 받지 않을 수 있습니다. 소설의 성격은 공모 사이트의 요약을 보고 적은 것이라, 분량과 세부 조건은 응모 전에 주최 측 요강을 확인하세요.<br>출처: 엽서시문학공모전, 콘테스트코리아, 위비티, 스토리움</p>
+</div>
+</div>
+<script>
+const DATA = [{"d": "2026-11-30", "t": "현대경제신문 신춘문예", "n": "장편소설, 단편소설. 순수문학. 등기 우편으로만 접수", "tags": ["장편", "단편"], "newcomer": false, "post": true}, {"d": "2026-11-30", "t": "창비교육 동화 공모전 이야기친구상", "n": "동화. 초등학교 생활이 주제. 미발표작", "tags": ["동화"], "newcomer": false, "post": false}, {"d": "2026-11-30", "t": "밀리로드 출간 공모전 시즌4", "n": "갈래 제한 없음(소설, 웹소설, 에세이). 밀리로드에 8화 이상 공개 연재", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2026-12-01", "t": "서울신문 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["동화"], "newcomer": true, "post": false}, {"d": "2026-12-01", "t": "경남신문 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["동화"], "newcomer": true, "post": false}, {"d": "2026-12-01", "t": "GoodNovel 금단의 사랑 시리즈 공모전", "n": "웹소설. 로맨스", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2026-12-02", "t": "조선일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["동화"], "newcomer": true, "post": false}, {"d": "2026-12-02", "t": "세계일보 신춘문예", "n": "소설. 순수문학. 신인. 우편 접수", "tags": ["소설"], "newcomer": true, "post": true}, {"d": "2026-12-02", "t": "문화일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["동화"], "newcomer": true, "post": false}, {"d": "2026-12-02", "t": "경상일보 신춘문예", "n": "소설, 동화. 순수문학. 미등단 신인만. 우편 접수", "tags": ["동화"], "newcomer": true, "post": true}, {"d": "2026-12-03", "t": "국제신문 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-03", "t": "부산일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["동화"], "newcomer": true, "post": false}, {"d": "2026-12-03", "t": "영남일보 신춘문예", "n": "단편소설. 순수문학. 신인", "tags": ["단편"], "newcomer": true, "post": false}, {"d": "2026-12-04", "t": "경향신문 신춘문예", "n": "소설. 순수문학. 신인", "tags": ["소설"], "newcomer": true, "post": false}, {"d": "2026-12-04", "t": "전북일보 신춘문예", "n": "소설, 동화. 순수문학. 신인. 우편 접수", "tags": ["동화"], "newcomer": true, "post": true}, {"d": "2026-12-06", "t": "제18회 손바닥문학상", "n": "짧은 소설(픽션) 또는 논픽션. 주제는 \"화\"", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2026-12-07", "t": "무등일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인. 우편 접수", "tags": ["단편", "동화"], "newcomer": true, "post": true}, {"d": "2026-12-08", "t": "매일신문 매일신춘문예", "n": "단편소설. 순수문학. 신인. 우편 접수", "tags": ["단편"], "newcomer": true, "post": true}, {"d": "2026-12-10", "t": "제23회 세계문학상", "n": "장편소설. 신인과 기성 모두. 상금 최대 5,000만 원", "tags": ["장편"], "newcomer": false, "post": false}, {"d": "2026-12-10", "t": "광주일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-11", "t": "강원일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-11", "t": "한라일보 신춘문예", "n": "단편소설. 순수문학. 우편 접수", "tags": ["단편"], "newcomer": false, "post": true}, {"d": "2026-12-12", "t": "전북도민일보 신춘문예", "n": "단편소설. 순수문학. 신인", "tags": ["단편"], "newcomer": true, "post": false}, {"d": "2026-12-13", "t": "웨이노벨 웹소설 공모전 FIRST STORY CHALLENGE", "n": "웹소설. 장르소설", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2026-12-17", "t": "광남일보 한국문학대상", "n": "소설, 동화. 순수문학. 신인", "tags": ["동화"], "newcomer": true, "post": false}, {"d": "2026-12-17", "t": "전라매일 신춘문예", "n": "소설. 순수문학", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "제2회 외황강 문학상", "n": "장편소설. 역사 소재. 기성 작가도 가능. 상금 최대 1억 원", "tags": ["장편"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "제25회 사계절문학상", "n": "청소년 장편소설 또는 소설집. 기성 작가도 가능", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "제5회 책읽는곰 어린이책 공모전", "n": "장편 동화, 그림책. 기성 작가도 가능", "tags": ["장편", "동화", "그림책"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "도서출판 득수 소소한설 공모전", "n": "소설. 출간 특전. 길이와 갈래는 요강 확인", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2027-01-10", "t": "제1회 ALONA 웹소설 공모전", "n": "웹소설 신작. 장르소설. 총상금 150만 원", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2027-01-31", "t": "제17회 천강문학상", "n": "소설, 동화. 순수문학. 미발표작. 기성 작가도 가능. 우편 접수", "tags": ["동화"], "newcomer": false, "post": true}, {"d": "2027-01-31", "t": "제3회 소원문학상", "n": "어린이·청소년 문학(동화, 청소년소설), 그림책. 기성 작가도 가능", "tags": ["동화", "청소년", "그림책"], "newcomer": false, "post": false}, {"d": "2027-01-31", "t": "제4회 현대문학x미래엔 청소년문학상", "n": "청소년 장편소설. 미발표작", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"d": "2027-03-31", "t": "창비 청소년 문학상", "n": "청소년 장편소설. 미발표작. 기성 작가도 가능", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"d": "2027-04-30", "t": "제11회 디멘시아문학상", "n": "소설. 주제는 치매", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2027-05-01", "t": "GoodNovel 제2회 대형 웹소설 공모전", "n": "웹소설. 장르소설. 총상금 3만 5천 달러", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2027-09-30", "t": "제1회 우리학교 청소년 문학상", "n": "청소년 장편소설. 메일 접수", "tags": ["장편", "청소년"], "newcomer": false, "post": false}];
+const WD = ['일','월','화','수','목','금','토'];
+let filter = '전체';
+function days(d){ const t=new Date(); t.setHours(0,0,0,0); const [y,m,dd]=d.split('-').map(Number); return Math.round((new Date(y,m-1,dd)-t)/86400000); }
+function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!==undefined) e.textContent=text; return e; }
+function match(r){ if(filter==='전체') return true; if(filter==='기성 작가 가능') return !r.newcomer; return r.tags.includes(filter); }
+function render(){
+  const box=document.getElementById('months'); box.textContent='';
+  const live=DATA.filter(r=>days(r.d)>=0 && match(r));
+  document.getElementById('count').textContent = live.length + '건';
+  if(!live.length){ box.appendChild(el('div','empty','이 조건에 맞는 공모가 없습니다.')); return; }
+  const groups=new Map();
+  for(const r of live){ const k=r.d.slice(0,7); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(r); }
+  for(const [k,rows] of groups){
+    const sec=el('section','month'); const h=el('h2',null,k.slice(0,4)+'년 '+Number(k.slice(5))+'월'); h.appendChild(el('small',null,rows.length+'건')); sec.appendChild(h);
+    const list=el('div','list');
+    for(const r of rows){
+      const row=el('article','row'); const n=days(r.d); const [y,m,d]=r.d.split('-').map(Number);
+      const when=el('div','when'); when.appendChild(el('b',null,m+'월 '+d+'일')); when.appendChild(el('span',null,WD[new Date(y,m-1,d).getDay()]+'요일'));
+      const dd=el('span','dd'+(n<=3?' hot':n<=14?' soon':''), n===0?'오늘 마감':'D-'+n); when.appendChild(dd); row.appendChild(when);
+      const what=el('div','what'); what.appendChild(el('h3',null,r.t));
+      const tags=el('div','tags'); for(const t of r.tags) tags.appendChild(el('span','tag kind',t));
+      if(r.newcomer) tags.appendChild(el('span','tag new','신인 대상'));
+      if(r.post) tags.appendChild(el('span','tag','우편 접수'));
+      if(tags.childNodes.length) what.appendChild(tags);
+      what.appendChild(el('p',null,r.n)); row.appendChild(what); list.appendChild(row);
+    }
+    sec.appendChild(list); box.appendChild(sec);
+  }
+}
+document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{ filter=b.dataset.f; document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false')); render(); }));
+render();
+</script>
+</body></html>
