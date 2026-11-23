@@ -46,6 +46,19 @@ header p{margin:6px 0 0;color:var(--ink-soft);font-size:.92rem}
 .tag{font-size:.76rem;padding:1px 8px;border-radius:4px;border:1px solid var(--line);color:var(--ink)}
 .tag.kind{background:var(--green-soft);border-color:transparent;color:var(--green);font-weight:600}
 .tag.new{background:var(--warn-soft);border-color:transparent;color:var(--warn)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.acts button{font:inherit;font-size:.84rem;padding:5px 12px;border-radius:5px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer;min-height:32px}
+.acts button:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.acts button:disabled{opacity:.5;cursor:default}
+.acts button.sub[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--sheet);font-weight:700}
+.acts button.skip[aria-pressed="true"]{background:var(--ink-soft);border-color:var(--ink-soft);color:var(--sheet);font-weight:700}
+.row.done .when,.row.done .what h3,.row.done .what p,.row.done .tags{opacity:.45}
+.row.done .what h3{text-decoration:line-through}
+.state{font-size:.78rem;font-weight:700;padding:1px 8px;border-radius:4px}
+.state.sub{background:var(--green-soft);color:var(--green)}
+.state.skip{background:var(--line);color:var(--ink-soft)}
+.sync{font-size:.84rem;color:var(--ink-soft);margin:0}
+.sync.bad{color:var(--warn)}
 .empty{padding:18px 16px;color:var(--ink-soft);background:var(--sheet);border:1px dashed var(--line);border-radius:6px}
 .foot{display:flex;flex-direction:column;gap:14px;color:var(--ink-soft);font-size:.9rem}
 .foot h2{font-family:var(--display);font-size:1rem;color:var(--ink);margin:0 0 4px}
@@ -55,10 +68,12 @@ header p{margin:6px 0 0;color:var(--ink-soft);font-size:.92rem}
 <div class="wrap">
 <header>
 <h1>소설 공모 목록</h1>
-<p>직접 원고를 내셔야 하는 공모 <b id="count"></b> · 2026-11-23에 고침 · 마감이 지난 것은 자동으로 숨깁니다</p>
+<p>직접 원고를 내셔야 하는 공모 · <b id="count"></b> · 2026-11-23에 고침</p>
+<p>제출했거나 포기한 공모는 그 줄의 버튼을 눌러 표시하세요. 한 번 더 누르면 풀립니다.</p>
 </header>
 <div class="grid" aria-hidden="true"></div>
-<div class="filters" role="group" aria-label="갈래로 고르기"><button type="button" id="f0" data-f="전체" aria-pressed="true">전체</button><button type="button" id="f1" data-f="장편" aria-pressed="false">장편</button><button type="button" id="f2" data-f="단편" aria-pressed="false">단편</button><button type="button" id="f3" data-f="동화" aria-pressed="false">동화</button><button type="button" id="f4" data-f="웹소설" aria-pressed="false">웹소설</button><button type="button" id="f5" data-f="청소년" aria-pressed="false">청소년</button><button type="button" id="f6" data-f="기성 작가 가능" aria-pressed="false">기성 작가 가능</button></div>
+<div class="filters" role="group" aria-label="갈래로 고르기"><button type="button" id="f0" data-f="전체" aria-pressed="true">전체</button><button type="button" id="f1" data-f="장편" aria-pressed="false">장편</button><button type="button" id="f2" data-f="단편" aria-pressed="false">단편</button><button type="button" id="f3" data-f="동화" aria-pressed="false">동화</button><button type="button" id="f4" data-f="웹소설" aria-pressed="false">웹소설</button><button type="button" id="f5" data-f="청소년" aria-pressed="false">청소년</button><button type="button" id="f6" data-f="기성 작가 가능" aria-pressed="false">기성 작가 가능</button><button type="button" id="hide" aria-pressed="false">제출·포기한 것 숨기기</button></div>
+<p class="sync" id="sync"></p>
 <div id="months" style="display:flex;flex-direction:column;gap:26px"></div>
 <div class="foot">
 
@@ -67,16 +82,48 @@ header p{margin:6px 0 0;color:var(--ink-soft);font-size:.92rem}
 </div>
 </div>
 <script>
-const DATA = [{"d": "2026-11-30", "t": "현대경제신문 신춘문예", "n": "장편소설, 단편소설. 순수문학. 등기 우편으로만 접수", "tags": ["장편", "단편"], "newcomer": false, "post": true}, {"d": "2026-11-30", "t": "창비교육 동화 공모전 이야기친구상", "n": "동화. 초등학교 생활이 주제. 미발표작", "tags": ["동화"], "newcomer": false, "post": false}, {"d": "2026-11-30", "t": "밀리로드 출간 공모전 시즌4", "n": "갈래 제한 없음(소설, 웹소설, 에세이). 밀리로드에 8화 이상 공개 연재", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2026-12-01", "t": "서울신문 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-01", "t": "경남신문 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-01", "t": "GoodNovel 금단의 사랑 시리즈 공모전", "n": "웹소설. 로맨스", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2026-12-02", "t": "조선일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-02", "t": "세계일보 신춘문예", "n": "소설. 순수문학. 신인. 우편 접수", "tags": ["소설"], "newcomer": true, "post": true}, {"d": "2026-12-02", "t": "문화일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-02", "t": "경상일보 신춘문예", "n": "소설, 동화. 순수문학. 미등단 신인만. 우편 접수", "tags": ["소설", "동화"], "newcomer": true, "post": true}, {"d": "2026-12-03", "t": "국제신문 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-03", "t": "부산일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-03", "t": "영남일보 신춘문예", "n": "단편소설. 순수문학. 신인", "tags": ["단편"], "newcomer": true, "post": false}, {"d": "2026-12-04", "t": "경향신문 신춘문예", "n": "소설. 순수문학. 신인", "tags": ["소설"], "newcomer": true, "post": false}, {"d": "2026-12-04", "t": "전북일보 신춘문예", "n": "소설, 동화. 순수문학. 신인. 우편 접수", "tags": ["소설", "동화"], "newcomer": true, "post": true}, {"d": "2026-12-06", "t": "제18회 손바닥문학상", "n": "짧은 소설(픽션) 또는 논픽션. 주제는 \"화\"", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2026-12-07", "t": "무등일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인. 우편 접수", "tags": ["단편", "동화"], "newcomer": true, "post": true}, {"d": "2026-12-08", "t": "매일신문 매일신춘문예", "n": "단편소설. 순수문학. 신인. 우편 접수", "tags": ["단편"], "newcomer": true, "post": true}, {"d": "2026-12-10", "t": "제23회 세계문학상", "n": "장편소설. 신인과 기성 모두. 상금 최대 5,000만 원", "tags": ["장편"], "newcomer": false, "post": false}, {"d": "2026-12-10", "t": "광주일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-11", "t": "강원일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-11", "t": "한라일보 신춘문예", "n": "단편소설. 순수문학. 우편 접수", "tags": ["단편"], "newcomer": false, "post": true}, {"d": "2026-12-12", "t": "전북도민일보 신춘문예", "n": "단편소설. 순수문학. 신인", "tags": ["단편"], "newcomer": true, "post": false}, {"d": "2026-12-13", "t": "웨이노벨 웹소설 공모전 FIRST STORY CHALLENGE", "n": "웹소설. 장르소설", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2026-12-17", "t": "광남일보 한국문학대상", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"d": "2026-12-17", "t": "전라매일 신춘문예", "n": "소설. 순수문학", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "제2회 외황강 문학상", "n": "장편소설. 역사 소재. 기성 작가도 가능. 상금 최대 1억 원", "tags": ["장편"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "제25회 사계절문학상", "n": "청소년 장편소설 또는 소설집. 기성 작가도 가능", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "제5회 책읽는곰 어린이책 공모전", "n": "장편 동화, 그림책. 기성 작가도 가능", "tags": ["장편", "동화", "그림책"], "newcomer": false, "post": false}, {"d": "2026-12-31", "t": "도서출판 득수 소소한설 공모전", "n": "소설. 출간 특전. 길이와 갈래는 요강 확인", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2027-01-10", "t": "제1회 ALONA 웹소설 공모전", "n": "웹소설 신작. 장르소설. 총상금 150만 원", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2027-01-31", "t": "제17회 천강문학상", "n": "소설, 동화. 순수문학. 미발표작. 기성 작가도 가능. 우편 접수", "tags": ["소설", "동화"], "newcomer": false, "post": true}, {"d": "2027-01-31", "t": "제3회 소원문학상", "n": "어린이·청소년 문학(동화, 청소년소설), 그림책. 기성 작가도 가능", "tags": ["소설", "동화", "청소년", "그림책"], "newcomer": false, "post": false}, {"d": "2027-01-31", "t": "제4회 현대문학x미래엔 청소년문학상", "n": "청소년 장편소설. 미발표작", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"d": "2027-03-31", "t": "창비 청소년 문학상", "n": "청소년 장편소설. 미발표작. 기성 작가도 가능", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"d": "2027-04-30", "t": "제11회 디멘시아문학상", "n": "소설. 주제는 치매", "tags": ["소설"], "newcomer": false, "post": false}, {"d": "2027-05-01", "t": "GoodNovel 제2회 대형 웹소설 공모전", "n": "웹소설. 장르소설. 총상금 3만 5천 달러", "tags": ["웹소설"], "newcomer": false, "post": false}, {"d": "2027-09-30", "t": "제1회 우리학교 청소년 문학상", "n": "청소년 장편소설. 메일 접수", "tags": ["장편", "청소년"], "newcomer": false, "post": false}];
+const DATA = [{"id": "cb1a6a8bdfe5f", "d": "2026-11-30", "t": "현대경제신문 신춘문예", "n": "장편소설, 단편소설. 순수문학. 등기 우편으로만 접수", "tags": ["장편", "단편"], "newcomer": false, "post": true}, {"id": "c48c5b4b9c4f9", "d": "2026-11-30", "t": "창비교육 동화 공모전 이야기친구상", "n": "동화. 초등학교 생활이 주제. 미발표작", "tags": ["동화"], "newcomer": false, "post": false}, {"id": "caebb16bff162", "d": "2026-11-30", "t": "밀리로드 출간 공모전 시즌4", "n": "갈래 제한 없음(소설, 웹소설, 에세이). 밀리로드에 8화 이상 공개 연재", "tags": ["웹소설"], "newcomer": false, "post": false}, {"id": "cc471f4c87cb8", "d": "2026-12-01", "t": "서울신문 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"id": "c6181c0e111dd", "d": "2026-12-01", "t": "경남신문 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"id": "c31b44c6556a0", "d": "2026-12-01", "t": "GoodNovel 금단의 사랑 시리즈 공모전", "n": "웹소설. 로맨스", "tags": ["웹소설"], "newcomer": false, "post": false}, {"id": "c5e118f49b8b9", "d": "2026-12-02", "t": "조선일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"id": "c4fff45089b4a", "d": "2026-12-02", "t": "세계일보 신춘문예", "n": "소설. 순수문학. 신인. 우편 접수", "tags": ["소설"], "newcomer": true, "post": true}, {"id": "ccb5ffcba1229", "d": "2026-12-02", "t": "문화일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"id": "cb652886a77be", "d": "2026-12-02", "t": "경상일보 신춘문예", "n": "소설, 동화. 순수문학. 미등단 신인만. 우편 접수", "tags": ["소설", "동화"], "newcomer": true, "post": true}, {"id": "cc4b2d809f968", "d": "2026-12-03", "t": "국제신문 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"id": "c6f526906d1d0", "d": "2026-12-03", "t": "부산일보 신춘문예", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"id": "cd8f2dda86d12", "d": "2026-12-03", "t": "영남일보 신춘문예", "n": "단편소설. 순수문학. 신인", "tags": ["단편"], "newcomer": true, "post": false}, {"id": "c9138c128daab", "d": "2026-12-04", "t": "경향신문 신춘문예", "n": "소설. 순수문학. 신인", "tags": ["소설"], "newcomer": true, "post": false}, {"id": "cafb4c0b1cf77", "d": "2026-12-04", "t": "전북일보 신춘문예", "n": "소설, 동화. 순수문학. 신인. 우편 접수", "tags": ["소설", "동화"], "newcomer": true, "post": true}, {"id": "cb187f73504fe", "d": "2026-12-06", "t": "제18회 손바닥문학상", "n": "짧은 소설(픽션) 또는 논픽션. 주제는 \"화\"", "tags": ["소설"], "newcomer": false, "post": false}, {"id": "c0b5b9721f0ef", "d": "2026-12-07", "t": "무등일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인. 우편 접수", "tags": ["단편", "동화"], "newcomer": true, "post": true}, {"id": "c3b5b803a20a8", "d": "2026-12-08", "t": "매일신문 매일신춘문예", "n": "단편소설. 순수문학. 신인. 우편 접수", "tags": ["단편"], "newcomer": true, "post": true}, {"id": "ccd7578b1d073", "d": "2026-12-10", "t": "제23회 세계문학상", "n": "장편소설. 신인과 기성 모두. 상금 최대 5,000만 원", "tags": ["장편"], "newcomer": false, "post": false}, {"id": "c37cb880017b0", "d": "2026-12-10", "t": "광주일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"id": "ce89a2721cb52", "d": "2026-12-11", "t": "강원일보 신춘문예", "n": "단편소설, 동화. 순수문학. 신인", "tags": ["단편", "동화"], "newcomer": true, "post": false}, {"id": "c8ab221451f43", "d": "2026-12-11", "t": "한라일보 신춘문예", "n": "단편소설. 순수문학. 우편 접수", "tags": ["단편"], "newcomer": false, "post": true}, {"id": "caf96aac85ada", "d": "2026-12-12", "t": "전북도민일보 신춘문예", "n": "단편소설. 순수문학. 신인", "tags": ["단편"], "newcomer": true, "post": false}, {"id": "c8b85529a808e", "d": "2026-12-13", "t": "웨이노벨 웹소설 공모전 FIRST STORY CHALLENGE", "n": "웹소설. 장르소설", "tags": ["웹소설"], "newcomer": false, "post": false}, {"id": "c41d96e281166", "d": "2026-12-17", "t": "광남일보 한국문학대상", "n": "소설, 동화. 순수문학. 신인", "tags": ["소설", "동화"], "newcomer": true, "post": false}, {"id": "cc92e96684f78", "d": "2026-12-17", "t": "전라매일 신춘문예", "n": "소설. 순수문학", "tags": ["소설"], "newcomer": false, "post": false}, {"id": "cf5477bb5dfa6", "d": "2026-12-31", "t": "제2회 외황강 문학상", "n": "장편소설. 역사 소재. 기성 작가도 가능. 상금 최대 1억 원", "tags": ["장편"], "newcomer": false, "post": false}, {"id": "cfb940686e2e0", "d": "2026-12-31", "t": "제25회 사계절문학상", "n": "청소년 장편소설 또는 소설집. 기성 작가도 가능", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"id": "c9921bd956d0a", "d": "2026-12-31", "t": "제5회 책읽는곰 어린이책 공모전", "n": "장편 동화, 그림책. 기성 작가도 가능", "tags": ["장편", "동화", "그림책"], "newcomer": false, "post": false}, {"id": "c1bcfb5ebf837", "d": "2026-12-31", "t": "도서출판 득수 소소한설 공모전", "n": "소설. 출간 특전. 길이와 갈래는 요강 확인", "tags": ["소설"], "newcomer": false, "post": false}, {"id": "c3b99a86c886d", "d": "2027-01-10", "t": "제1회 ALONA 웹소설 공모전", "n": "웹소설 신작. 장르소설. 총상금 150만 원", "tags": ["웹소설"], "newcomer": false, "post": false}, {"id": "c083fd65c9f3f", "d": "2027-01-31", "t": "제17회 천강문학상", "n": "소설, 동화. 순수문학. 미발표작. 기성 작가도 가능. 우편 접수", "tags": ["소설", "동화"], "newcomer": false, "post": true}, {"id": "c5e570bded0bd", "d": "2027-01-31", "t": "제3회 소원문학상", "n": "어린이·청소년 문학(동화, 청소년소설), 그림책. 기성 작가도 가능", "tags": ["소설", "동화", "청소년", "그림책"], "newcomer": false, "post": false}, {"id": "c0625a3a3756e", "d": "2027-01-31", "t": "제4회 현대문학x미래엔 청소년문학상", "n": "청소년 장편소설. 미발표작", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"id": "c16ba3c63f197", "d": "2027-03-31", "t": "창비 청소년 문학상", "n": "청소년 장편소설. 미발표작. 기성 작가도 가능", "tags": ["장편", "청소년"], "newcomer": false, "post": false}, {"id": "cdc3ed5344cd4", "d": "2027-04-30", "t": "제11회 디멘시아문학상", "n": "소설. 주제는 치매", "tags": ["소설"], "newcomer": false, "post": false}, {"id": "c964dc22f1d69", "d": "2027-05-01", "t": "GoodNovel 제2회 대형 웹소설 공모전", "n": "웹소설. 장르소설. 총상금 3만 5천 달러", "tags": ["웹소설"], "newcomer": false, "post": false}, {"id": "c1669c2c285f4", "d": "2027-09-30", "t": "제1회 우리학교 청소년 문학상", "n": "청소년 장편소설. 메일 접수", "tags": ["장편", "청소년"], "newcomer": false, "post": false}];
 const WD = ['일','월','화','수','목','금','토'];
 let filter = '전체';
+/* 체크 상태: id -> 'submitted'(제출함) | 'skipped'(포기). claude.ai 에서 열면 db 에 저장되어 기기 사이에 맞춰지고,
+   그 밖(공개 주소, PC 파일)에서는 이 브라우저에만 저장된다. */
+const LS = 'novel-contest-status-v1';
+let status = {}, db = null, hideDone = false; const pending = new Set();
+function lsLoad(){ try{ const v = JSON.parse(localStorage.getItem(LS) || '{}'); status = (v && typeof v === 'object') ? v : {}; }catch(e){ status = {}; } }
+function lsSave(){ try{ localStorage.setItem(LS, JSON.stringify(status)); }catch(e){} }
+function sync(kind){ const p = document.getElementById('sync'); const T = {
+  local: '체크는 이 기기의 이 브라우저에만 저장됩니다.',
+  wait: '저장소에 연결하는 중입니다.',
+  live: '체크는 바로 저장되고, 다른 기기에서 열어도 같은 상태로 보입니다.',
+  slow: '저장소에 아직 연결되지 않았습니다. 체크가 최신이 아닐 수 있습니다.',
+  fail: '저장하지 못했습니다. 잠시 뒤 다시 눌러 주세요.' };
+  p.textContent = T[kind]; p.className = 'sync' + ((kind === 'slow' || kind === 'fail') ? ' bad' : ''); }
+async function setState(r, s){
+  if(pending.has(r.id)) return;
+  const prev = status[r.id];
+  if(s) status[r.id] = s; else delete status[r.id];
+  lsSave();
+  if(!db){ render(); return; }
+  pending.add(r.id); render();
+  try{
+    const ref = db.doc('status/' + r.id);
+    if(s) await ref.set({state: s, title: r.t, deadline: r.d, at: new Date().toISOString()}); else await ref.delete();
+    sync('live');
+  }catch(e){
+    if(prev) status[r.id] = prev; else delete status[r.id];
+    lsSave(); sync('fail');
+  }
+  pending.delete(r.id); render();
+}
 function days(d){ const t=new Date(); t.setHours(0,0,0,0); const [y,m,dd]=d.split('-').map(Number); return Math.round((new Date(y,m-1,dd)-t)/86400000); }
 function el(tag, cls, text){ const e=document.createElement(tag); if(cls) e.className=cls; if(text!==undefined) e.textContent=text; return e; }
 function match(r){ if(filter==='전체') return true; if(filter==='기성 작가 가능') return !r.newcomer; return r.tags.includes(filter); }
 function render(){
   const box=document.getElementById('months'); box.textContent='';
-  const live=DATA.filter(r=>days(r.d)>=0 && match(r));
-  document.getElementById('count').textContent = live.length + '건';
+  const open=DATA.filter(r=>days(r.d)>=0);
+  const left=open.filter(r=>!status[r.id]).length;
+  document.getElementById('count').textContent = '남은 ' + left + '건 / 전체 ' + open.length + '건';
+  const live=open.filter(r=>match(r) && !(hideDone && status[r.id]));
   if(!live.length){ box.appendChild(el('div','empty','이 조건에 맞는 공모가 없습니다.')); return; }
   const groups=new Map();
   for(const r of live){ const k=r.d.slice(0,7); if(!groups.has(k)) groups.set(k,[]); groups.get(k).push(r); }
@@ -84,7 +131,8 @@ function render(){
     const sec=el('section','month'); const h=el('h2',null,k.slice(0,4)+'년 '+Number(k.slice(5))+'월'); h.appendChild(el('small',null,rows.length+'건')); sec.appendChild(h);
     const list=el('div','list');
     for(const r of rows){
-      const row=el('article','row'); const n=days(r.d); const [y,m,d]=r.d.split('-').map(Number);
+      const st=status[r.id];
+      const row=el('article','row'+(st?' done':'')); const n=days(r.d); const [y,m,d]=r.d.split('-').map(Number);
       const when=el('div','when'); when.appendChild(el('b',null,m+'월 '+d+'일')); when.appendChild(el('span',null,WD[new Date(y,m-1,d).getDay()]+'요일'));
       const dd=el('span','dd'+(n<=3?' hot':n<=14?' soon':''), n===0?'오늘 마감':'D-'+n); when.appendChild(dd); row.appendChild(when);
       const what=el('div','what'); what.appendChild(el('h3',null,r.t));
@@ -92,12 +140,37 @@ function render(){
       if(r.newcomer) tags.appendChild(el('span','tag new','신인 대상'));
       if(r.post) tags.appendChild(el('span','tag','우편 접수'));
       if(tags.childNodes.length) what.appendChild(tags);
-      what.appendChild(el('p',null,r.n)); row.appendChild(what); list.appendChild(row);
+      what.appendChild(el('p',null,r.n));
+      const acts=el('div','acts');
+      if(st) acts.appendChild(el('span','state '+(st==='submitted'?'sub':'skip'), st==='submitted'?'제출함':'포기함'));
+      for(const [label,val,cls] of [['제출했음','submitted','sub'],['포기','skipped','skip']]){
+        const b=el('button',cls,label); b.type='button'; b.setAttribute('aria-pressed', st===val?'true':'false');
+        b.disabled=pending.has(r.id);
+        b.setAttribute('aria-label', r.t+' '+label+(st===val?' 취소':''));
+        b.addEventListener('click',()=>setState(r, status[r.id]===val?null:val));
+        acts.appendChild(b);
+      }
+      what.appendChild(acts);
+      row.appendChild(what); list.appendChild(row);
     }
     sec.appendChild(list); box.appendChild(sec);
   }
 }
-document.querySelectorAll('.filters button').forEach(b=>b.addEventListener('click',()=>{ filter=b.dataset.f; document.querySelectorAll('.filters button').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false')); render(); }));
-render();
+document.querySelectorAll('.filters button[data-f]').forEach(b=>b.addEventListener('click',()=>{ filter=b.dataset.f; document.querySelectorAll('.filters button[data-f]').forEach(x=>x.setAttribute('aria-pressed', x===b?'true':'false')); render(); }));
+document.getElementById('hide').addEventListener('click',e=>{ hideDone=!hideDone; e.currentTarget.setAttribute('aria-pressed', hideDone?'true':'false'); render(); });
+lsLoad(); sync('local'); render();
+(async()=>{
+  let d=null;
+  try{ d = (window.claude && window.claude.use) ? await window.claude.use('db') : null; }catch(e){ d=null; }
+  if(!d) return;
+  db=d; sync('wait');
+  const timer=setTimeout(()=>sync('slow'),10000);
+  db.collection('status').onSnapshot(snap=>{
+    const m={}; snap.docs.forEach(x=>{ const b=x.data(); if(b && (b.state==='submitted'||b.state==='skipped')) m[x.id]=b.state; });
+    status=m; lsSave();
+    if(!snap.metadata.fromCache){ clearTimeout(timer); sync('live'); }
+    render();
+  }, err=>{ clearTimeout(timer); db=null; sync('local'); render(); });
+})();
 </script>
 </body></html>
